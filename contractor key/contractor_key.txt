@@ -1,0 +1,12 @@
+let
+//creates a key for joining so that contractor names can be corrected in the final dataset    
+    Source = Excel.CurrentWorkbook(){[Name="contractor_list"]}[Content],
+        //loads in contractor_list, which was edited in excel to add the corrected names
+    Changed_Type = Table.TransformColumnTypes(Source,{{"contractors_clean", type text}, {"contractors_corrected", type text}}),
+        //changed the column types to text
+    Full_List = Table.AddColumn(Changed_Type, "contractors_fixed", each if [contractors_corrected] is null then [contractors_clean] else [contractors_corrected]),
+        //creates a column of the original names or the corrected name if one was given
+    Drop_corrected = Table.RemoveColumns(Full_List,"contractors_corrected")
+        //removes contractors_corrected column
+in
+    Drop_corrected
