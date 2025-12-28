@@ -1,0 +1,12 @@
+let
+//creates a dataset to help determine which contracting companies are the same
+    //example: YES! SOLAR SOLUTIONS and CATES ASSOCIATES are the same company
+    //using conditional formatting in excel, one can determine which companies are the same based on their address and phone number    
+    Source = cleaning,
+        //loads solar-permits-applications dataset
+    Select_Columns = Table.SelectColumns(Source, {"contractorphone","contractoraddress1_clean","contractors_clean"}),
+        //selects only the contractorphone, contractoraddress1_clean, and contractors_clean columns
+    Distinct = Table.Distinct(Select_Columns)
+        //takes only distinct columns
+in
+    Distinct

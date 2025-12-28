@@ -1,0 +1,7 @@
+let
+    remove_dupe_spaces = (text_spaces as text) => Text.Combine(List.RemoveItems(Text.Split(text_spaces, " "), {""}), " ")
+        //removes multiple spaces from text
+        //found on https://gorilla.bi/power-query/removing-excess-spaces/
+        //credit: Rick De Groot
+in
+    remove_dupe_spaces

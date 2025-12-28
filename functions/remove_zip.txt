@@ -1,0 +1,5 @@
+let
+    remove_zip = (contractor as text) => if Value.Is(Value.FromText(Text.End(contractor,5)), Int64.Type) then Text.Trim(Text.Start(contractor, Text.Length(contractor) - 5)) else contractor
+        //if there is a string of 5 digits at the end of a string of text, it is removed
+in
+    remove_zip

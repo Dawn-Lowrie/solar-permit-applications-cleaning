@@ -1,0 +1,6 @@
+let
+    contractor_clean = (contractorname as text) =>
+        Text.Trim(Text.Replace(Text.Replace(Text.Replace(Text.Replace(Text.Replace(Text.Replace(Text.Replace(Text.Replace(Text.Replace(Text.Replace(contractorname, "LLP", ""), "T/A",""), ",", ""), "(", ""), ")", ""), "LLC", ""), "INC", ""), ".", ""), ":CATE ASSO", ""), ";", ""))
+        //removes specific string of characters that appeared frequently in the contractorcompanyname column
+in
+    contractor_clean

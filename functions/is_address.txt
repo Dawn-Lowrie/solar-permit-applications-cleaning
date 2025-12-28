@@ -1,0 +1,6 @@
+let
+    is_address = (address as text) as logical => Value.Is(Value.FromText(Text.Start(address,1)), Int64.Type)
+        //if the first character is a number, then TRUE
+        //US addresses start with numbers
+in
+    is_address

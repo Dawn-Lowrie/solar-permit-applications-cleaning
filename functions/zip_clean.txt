@@ -1,0 +1,5 @@
+let
+    zip_clean = (zip as text) as text => if Text.Length(zip) = 9 then Text.Insert(zip,5,"-") else zip
+        //determines if a zipcode is +4 and formats it
+in
+    zip_clean

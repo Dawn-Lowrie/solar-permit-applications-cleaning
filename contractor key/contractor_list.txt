@@ -1,0 +1,11 @@
+let
+//creates list of distinct contractors to be converted into a key for changing names of entries that couldn't be changed using code
+    //use this dataset to add a column where the corrected name will be inserted    
+    Source = #"contractors",
+        //loads the contractors dataset used to determine which companies were the same
+    Dropped = Table.RemoveColumns(Source, {"contractorphone","contractoraddress1_clean"}),
+        //removes all columns except for the contractors_clean column
+    Distinct = Table.Distinct(Dropped, "contractors_clean")
+        //selects all distinct contractors
+in
+    Distinct

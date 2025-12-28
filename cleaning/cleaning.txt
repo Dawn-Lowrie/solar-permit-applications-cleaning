@@ -1,0 +1,49 @@
+let
+//loading data
+    Source = Csv.Document(File.Contents("C:\Users\Dawn\Downloads\solar-permit-applications.csv"),[Delimiter=";", Columns=41, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+        //auto-generated from loading data into power query
+        //data was loaded from my downloads folder
+    promoted_headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+        //auto-generated from loading data into power query
+    
+//changing column types
+    changed_type = Table.TransformColumnTypes(promoted_headers,{{"permitnum", type text}, {"description", type text}, {"issuedate", type date}, {"applieddate", type date}, {"coissueddate", type date}, {"statuscurrent", type text}, {"originaladdress1", type text}, {"originaladdress2", type text}, {"originalcity", type text}, {"originalstate", type text}, {"originalzip", type text}, {"jurisdiction", type text}, {"permitclass", type text}, {"permitclassmapped", type text}, {"statuscurrentmapped", type text}, {"workclass", type text}, {"workclassmapped", type text}, {"permittype", type text}, {"permittypemapped", type text}, {"permittypedesc", type text}, {"statusdate", type date}, {"totalsqft", Int64.Type}, {"latitude", type number}, {"longitude", type number}, {"projectcost", Currency.Type}, {"housingunits", type text}, {"pin", Int64.Type}, {"contractorcompanyname", type text}, {"contractortrade", type text}, {"contractortrademapped", type text}, {"contractorphone", type text}, {"contractoraddress1", type text}, {"contractoraddress2", type text}, {"contractorzip", type text}, {"ownername", type text}, {"owneraddress1", type text}, {"owneraddress2", type text}, {"ownerzip", type text}, {"gispoint", type text}, {"year", Int64.Type}, {"year_text", type text}}),
+        //correct the data type for each column
+    split_gispoint = Table.SplitColumn(changed_type, "gispoint", Splitter.SplitTextByDelimiter(", ", QuoteStyle.Csv), {"gispointlatitude", "gispointlongitude"}),
+        //splits the gispoint column into separate latitude and longitude columns
+    gispoint_change_type = Table.TransformColumnTypes(split_gispoint, {{"gispointlatitude", type number}, {"gispointlongitude", type number}}),
+        //changed new gispoint latitude and longitude columns to data type number (original data type of gispoint was text so it could be split)
+
+//cleaning zip codes
+    clean_originalzip = Table.AddColumn(gispoint_change_type, "originalzip_clean", each Zip_Clean([originalzip])),
+    clean_contractorzip = Table.AddColumn(clean_originalzip, "contractorzip_clean", each Zip_Clean([contractorzip])),
+    clean_ownerzip = Table.AddColumn(clean_contractorzip, "ownerzip_clean", each Zip_Clean([ownerzip])),
+        //used a custom function to correct 9 digit zip codes to be a string of 5 and 4 digits separated by a dash for all zip code columns
+        //the original columns will be removed at the end of the cleaning process and replaced with the cleaned versions
+
+//cleaning addresses and owner names
+    //clean the mismatched contractor addresses where some entries in contractoraddress1 are not addresses and the real address is stored in contractoraddress2
+    //to keep all information, anything from contractoraddress1 that isn't an address will be stored in the cleaned contractoraddress2 column
+    //used a custom function, Is_Address, to determine whether an entry was an address or not (worked on all but one address in the entire dataset)
+    clean_contractoraddress1 = Table.AddColumn(clean_ownerzip, "contractoraddress1_clean", each if not Is_Address([contractoraddress1]) and Is_Address([contractoraddress2]) then [contractoraddress2] else [contractoraddress1]),
+        //if contractoraddress1 isn't an address and contractoraddress2 is, the entry from contractoraddress2 is taken
+        //otherwise, the entry from contractoraddress1 is taken
+    clean_contractoraddress2 = Table.AddColumn(clean_contractoraddress1, "contractoraddress2_clean", each if not Is_Address([contractoraddress1]) and Is_Address([contractoraddress2]) then [contractoraddress1] else [contractoraddress2]),
+        //if contractoraddress2 isn't an address and contractoraddress2 is, the entry from contractoraddress1 is taken
+        //otherwise, the entry from contractoraddress2 is taken
+
+    //some owner names were fragmented and stored in the ownername and owneraddress1 columns
+    clean_ownername = Table.AddColumn(clean_contractoraddress2, "ownername_clean", each if not Is_Address([owneraddress1]) then [ownername] & " " & [owneraddress1] else [ownername]),
+        //if the entry in owneraddress1 isn't an address (a name), then it concatenates that entry with the entry in the ownername column
+        //otherwise, ownername is left alone
+    clean_owneraddress1 = Table.AddColumn(clean_ownername, "owneraddress1_clean", each if not Is_Address([owneraddress1]) then [owneraddress2] else [owneraddress1]),
+        //if the entry in owneraddress1 is a name, that entry is replaced with the address stored in owneraddress2
+    clean_owneraddress2 = Table.AddColumn(clean_owneraddress1, "owneraddress2_clean", each if [owneraddress2] = [owneraddress1_clean] then "" else [owneraddress2]),
+        //if the entry in owneraddress1 is a name, the entry is nulled out as it was moved to the cleaned owneraddress1 column
+
+//cleaning the contractor names
+    //standardized the contractorcompanyname column to be used as a key for joining to a column with corrected names for specific companies
+    clean_contractors = Table.AddColumn(clean_owneraddress2, "contractors_clean", each Remove_Dupe_Spaces(Remove_Zip(Contractor_Clean([contractorcompanyname]))))
+        //used custom functions to clean the contractorcompanyname column, removing instances of zip codes, duplicate spaces, and certain strings of characters
+in
+    clean_contractors
