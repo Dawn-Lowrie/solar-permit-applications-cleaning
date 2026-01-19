@@ -9,13 +9,9 @@ let
 //changing column types
     changed_type = Table.TransformColumnTypes(promoted_headers,{{"permitnum", type text}, {"description", type text}, {"issuedate", type date}, {"applieddate", type date}, {"coissueddate", type date}, {"statuscurrent", type text}, {"originaladdress1", type text}, {"originaladdress2", type text}, {"originalcity", type text}, {"originalstate", type text}, {"originalzip", type text}, {"jurisdiction", type text}, {"permitclass", type text}, {"permitclassmapped", type text}, {"statuscurrentmapped", type text}, {"workclass", type text}, {"workclassmapped", type text}, {"permittype", type text}, {"permittypemapped", type text}, {"permittypedesc", type text}, {"statusdate", type date}, {"totalsqft", Int64.Type}, {"latitude", type number}, {"longitude", type number}, {"projectcost", Currency.Type}, {"housingunits", type text}, {"pin", Int64.Type}, {"contractorcompanyname", type text}, {"contractortrade", type text}, {"contractortrademapped", type text}, {"contractorphone", type text}, {"contractoraddress1", type text}, {"contractoraddress2", type text}, {"contractorzip", type text}, {"ownername", type text}, {"owneraddress1", type text}, {"owneraddress2", type text}, {"ownerzip", type text}, {"gispoint", type text}, {"year", Int64.Type}, {"year_text", type text}}),
         //correct the data type for each column
-    split_gispoint = Table.SplitColumn(changed_type, "gispoint", Splitter.SplitTextByDelimiter(", ", QuoteStyle.Csv), {"gispointlatitude", "gispointlongitude"}),
-        //splits the gispoint column into separate latitude and longitude columns
-    gispoint_change_type = Table.TransformColumnTypes(split_gispoint, {{"gispointlatitude", type number}, {"gispointlongitude", type number}}),
-        //changed new gispoint latitude and longitude columns to data type number (original data type of gispoint was text so it could be split)
 
 //cleaning zip codes
-    clean_originalzip = Table.AddColumn(gispoint_change_type, "originalzip_clean", each Zip_Clean([originalzip])),
+    clean_originalzip = Table.AddColumn(changed_type, "originalzip_clean", each Zip_Clean([originalzip])),
     clean_contractorzip = Table.AddColumn(clean_originalzip, "contractorzip_clean", each Zip_Clean([contractorzip])),
     clean_ownerzip = Table.AddColumn(clean_contractorzip, "ownerzip_clean", each Zip_Clean([ownerzip])),
         //used a custom function to correct 9 digit zip codes to be a string of 5 and 4 digits separated by a dash for all zip code columns
